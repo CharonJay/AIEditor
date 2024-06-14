@@ -16,7 +16,6 @@
 import remixiconUrl from 'remixicon/fonts/remixicon.symbol.svg'
 import { ElSelect, ElOption } from 'element-plus';
 import { ref } from "vue";
-import editor from "@/components/Editor.vue";
 
 export default {
   name: 'MenuOptionItem',

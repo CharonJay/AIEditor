@@ -22,16 +22,19 @@
         </div>
       </el-header>
       <el-container>
-        <el-aside class="left-aside">
-          left_Aside
+        <el-aside  class="left-aside sidebar">
+          <TocPanel :items="toc" :editor="editor"/>
         </el-aside>
         <el-main class="main">
           <div class="editor-main" v-if="editor">
             <editor-content class="editor-content" :editor="editor" />
+            <div class="character-count" v-if="editor">
+              {{ editor.storage.characterCount.characters() }} characters
+            </div>
           </div>
         </el-main>
         <el-aside class="aside right-aside">
-          right_Aside
+          <chat-box></chat-box>
         </el-aside>
       </el-container>
     </el-container>
@@ -39,7 +42,8 @@
 </template>
 
 <script>
-import { ArrowLeft } from '@element-plus/icons-vue'
+
+import {ArrowLeft} from "@element-plus/icons-vue";
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Highlight from '@tiptap/extension-highlight'
@@ -48,13 +52,30 @@ import TaskItem from "@tiptap/extension-task-item";
 import TextAlign from '@tiptap/extension-text-align'
 import FontFamily from "@tiptap/extension-font-family";
 import TextStyle from "@tiptap/extension-text-style";
+import Underline from "@tiptap/extension-underline";
+import CharacterCount from "@tiptap/extension-character-count";
+import Mathematics from '@tiptap-pro/extension-mathematics'
+import {getHierarchicalIndexes, TableOfContents} from "@tiptap-pro/extension-table-of-contents";
 import FontSize from "tiptap-extension-font-size";
+import Placeholder from '@tiptap/extension-placeholder'
+
 import MenuBar from './MenuBar.vue'
+import ChatBox from './Chat.vue'; // 确保路径正确
+
+import {ref} from "vue";
+import TocPanel from "./TocPanel.vue";
+
+import 'katex/dist/katex.min.css';
+import '../assets/EditorPanel.css';
+import '../assets/TiptapStyle.css';
+
 
 export default {
   name: 'EditorPanel',
   components: {
     EditorContent,
+    TocPanel,
+    ChatBox,
     MenuBar
   },
   computed: {
@@ -65,14 +86,45 @@ export default {
   props: {
     msg: String
   },
+  data() {
+    return {
+      panelVisible: false // 控制面板显示状态的变量
+    };
+  },
+  methods: {
+    togglePanel() {
+      this.panelVisible = !this.panelVisible; // 切换面板显示状态
+    }
+  },
   setup() {
+    const toc = ref([])
     const editor = useEditor({
-      content: '<p>I’m running Tiptap with vue-next. 🎉</p>',
+      content:
+          '<h1> 现在支持目录大纲了 </h1>'+
+          '<h2> 二级标题 </h2>'+
+          '<h3> 三级标题 </h3>'+
+          '<h4> 四级标题 </h4>'+
+          '<h1> 一级标题 </h1>'+
+          '<h5> 五级标题 </h5>'+
+          '<h6> 六级标题 </h6>'+
+          '<p>I’m running Tiptap with vue-next. 🎉   </p>' +
+          '<li>现在支持字符统计了</li>' +
+          '<li>现在支持 $\\LaTeX$ 语法了</li>' +
+          '<p>------------分隔符------------------</p>'+
+          '<p>缺失的功能:</p>'+
+          '<li>表格插入</li>'+
+          '<li>图片插入</li>'+
+          '<li>字体颜色修改</li>',
+
       extensions: [
         Highlight,
-        TaskList,
-        TaskItem,
+        TaskItem.configure({
+          nested: true,
+        }),
         TextStyle,
+        TaskList.configure({
+          itemTypeName: 'taskItem',
+        }),
         FontSize.configure({
           types: ['textStyle'],
         }),
@@ -82,101 +134,39 @@ export default {
         FontFamily.configure({
           types: ['textStyle'],
         }),
-        StarterKit
+        Underline.configure({
+          HTMLAttributes: {
+            class: 'my-custom-class',
+          },
+        }),
+        CharacterCount.configure({
+            mode: 'textSize',
+        }),
+        Mathematics,
+        TableOfContents.configure({
+          getIndex: getHierarchicalIndexes,
+          onUpdate(content) {
+            toc.value = content.map(item => ({
+              id: item.id,
+              text: item.textContent,
+              level: item.level,
+              isActive: item.isActive,
+              isScrolledOver: item.isScrolledOver,
+            }));
+          },
+        }),
+        Placeholder.configure({
+          placeholder: 'Write something …',
+        }),
+        StarterKit,
       ]
     })
     return {
-      editor
+      editor,
+      toc
     }
   }
 }
+
+
 </script>
-
-<style>
-  .page-header{
-    height: 60px;
-  }
-  .breadcrumb-header{
-
-  }
-  .parent-container{
-    height: 860px;
-    width: 1640px;
-  }
-  .header-menu {
-    position: relative;
-    background-color: #B3C0D1;
-    color: #333;
-    text-align: center;
-    line-height: 60px;
-  }
-  .left-aside {
-    background-color: #D3DCE6;
-    color: #333;
-    text-align: center;
-    line-height: 50px;
-     width:15vw;
-  }
-  .right-aside {
-    background-color: #D3DCE6;
-    color: #333;
-    text-align: center;
-    line-height: 45px;
-     width:15vw;
-  }
-  .main {
-    background-color: #E9EEF3;
-    color: #333;
-    line-height: 20px;
-    text-align: left;
-  }
-
-  body > .el-container {
-    margin-bottom: 40px;
-  }
-
-  .el-container:nth-child(5) .el-aside,
-  .el-container:nth-child(6) .el-aside {
-    line-height: 260px;
-  }
-
-  .el-container:nth-child(7) .el-aside {
-    line-height: 320px;
-  }
-
-  .editor-menu {
-    display: flex;
-    flex-direction: column;
-    max-height: 47rem;
-    color: #0d0d0d;
-    background-color: #fff;
-    border: 3px solid #0a0303;
-    border-radius: .75rem;
-  }
-
-  .editor-main {
-    display: flex;
-    flex-direction: column;
-    height: 47rem;
-    max-height: 47rem;
-    color: #0d0d0d;
-    background-color: #fff;
-    border: 3px solid #0a0303;
-    border-radius: .5rem;
-  }
-
-  .editor-content {
-    padding: .7rem .5rem;
-    background: #ffffff;
-    border-radius: 5px;
-    height: 100%;
-    max-width: 100%;
-    overflow-wrap: break-word; /* Ensure long words break and wrap */
-    overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  .ProseMirror:focus {
-  outline: 0;
-  }
-</style>

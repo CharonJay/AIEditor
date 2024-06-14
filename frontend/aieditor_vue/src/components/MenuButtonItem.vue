@@ -1,7 +1,6 @@
 <template>
     <el-button
       class="menu-button-item"
-      :class="{ 'is-active': isActive ? isActive() : null }"
       @click="action"
       :title="title"
       type="text"
@@ -35,10 +34,6 @@ export default {
       type: Function,
       required: true
     },
-    isActive: {
-      type: Function,
-      default: null
-    }
   },
   setup() {
     const iconUrl = ref(remixiconUrl)
