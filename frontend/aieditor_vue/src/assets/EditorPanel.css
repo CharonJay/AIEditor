@@ -18,8 +18,20 @@
   position: relative;
   background-color: #b3c0d1;
   color: #333;
+}
+
+/* 编辑器菜单样式 */
+.editor-menu {
+  display: flex;
+  flex-direction: column;
+  height: 2rem; /* 设置固定高度 */
+  max-height: 3rem;
   text-align: center;
-  line-height: 60px;
+  line-height: 2rem;
+  color: #0d0d0d;
+  background-color: #fff;
+  border: 3px solid #0a0303;
+  border-radius: 0.75rem;
 }
 
 /* 左侧边栏样式 */
@@ -36,9 +48,7 @@
   flex-grow: 0;
   flex-shrink: 0;
   padding: 1rem;
-  width: 15rem;
   position: sticky;
-  height: 100vh;
   top: 0;
 
   @media (min-width: 800px) {
@@ -251,11 +261,10 @@ button {
 }
 
 /* 主内容区样式 */
-.main {
+.el-main.main {
+  padding: 5px; /* 移除内边距 */
   background-color: #e9eef3;
   color: #333;
-  line-height: 20px;
-  text-align: left;
 }
 
 /* 调整全局el-container组件的底部外边距 */
@@ -272,37 +281,27 @@ body > .el-container {
   line-height: 320px;
 }
 
-/* 编辑器菜单样式 */
-.editor-menu {
-  display: flex;
-  flex-direction: column;
-  max-height: 47rem;
-  color: #0d0d0d;
-  background-color: #fff;
-  border: 3px solid #0a0303;
-  border-radius: 0.75rem;
-}
-
 /* 编辑器主样式 */
 .editor-main {
   display: flex;
   flex-direction: column;
-  height: 47rem;
-  max-height: 47rem;
+  height: 50rem;
+  max-height: 50rem;
   color: #0d0d0d;
   background-color: #fff;
   border: 3px solid #0a0303;
   border-radius: 0.5rem;
 }
 
-
 /* 编辑器内容样式 */
 .editor-content {
-  padding: 0.7rem 0.5rem;
+  padding: 0.7rem 0.5rem;  /*内边距*/
   background: #ffffff;
   border-radius: 5px;
   height: 100%;
   max-width: 100%;
+  text-align: left;
+  line-height: 20px;
   overflow-wrap: break-word; /* 确保长单词换行 */
   overflow-x: hidden;
   overflow-y: auto;
@@ -321,4 +320,9 @@ body > .el-container {
   color: #adb5bd;
   pointer-events: none;
   height: 0;
+}
+
+/* 计数器样式 */
+.character-count{
+   text-align: center;
 }
