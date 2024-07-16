@@ -23,6 +23,7 @@
         :card-id="String(card.id)"
         :card-title="card.name"
         :img-src="card.image_path"
+        :is-delete-visible="false"
         @previewEvent="showDrawer(card)"
         @useFormatEvent="onUse" >
       </formatting-card>
@@ -42,14 +43,20 @@ export default defineComponent({
     FormattingCard,
     FormatEditorPanel
   },
+  props: {
+    // 定义组件的 props
+    propA: String,
+  },
   setup(props, context)  {
+    const propAValue = ref(props.propA); // 使用 props 中的属性,仅用于避免props报错
+    propAValue.value = "测试"
     const templateDrawerVisible = ref(false);
-    const cards = ref([]);
+    const cards = ref<any[]>([]); // 假设 cards 是一个 ref 数组，类型为 any[]
     const selectedId = ref('');
     const selectedContent = ref('');
     const selectedCardTitle = ref('');
     const selectedImgSrc = ref('');
-    const formatEditorPanel = ref(null);
+    const formatEditorPanel = ref<any>(null); // 假设 formatEditorPanel 是一个 ref 对象，类型为 any
 
     const username = "官方模板管理用户"
 
@@ -68,7 +75,12 @@ export default defineComponent({
       selectedCardTitle.value = card.name;
       selectedImgSrc.value = card.image_path;
       templateDrawerVisible.value = true;
-      formatEditorPanel.value.updateContent(card.content);
+      // 检查 formatEditorPanel 是否存在
+      if (formatEditorPanel.value) {
+        formatEditorPanel.value.updateContent(card.content);
+      } else {
+        console.error("formatEditorPanel is not initialized.");
+      }
     };
 
     const onUse = (cardId: string) => {

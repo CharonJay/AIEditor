@@ -22,7 +22,7 @@
             </div>
             <template #tip>
               <div class="el-upload__tip">
-                支持格式：png、jpg、jpeg、pdf、pdf、mpeg、wav、ogg、flac 单个文件不能超过20MB
+                支持格式：png、jpg、jpeg、pdf、mpeg、wav、ogg、flac 单个文件不能超过20MB
               </div>
             </template>
           </el-upload>
@@ -45,6 +45,41 @@
       </el-row>
     </div>
 
+  </el-dialog>
+  <el-dialog class="mind-map-panel" v-model="mindMapDialogVisible" title="智能思维导图" width="1300">
+    <div class="mind-map-drawer-div" v-loading="mindMapLoading" element-loading-text="拼命加载中...">
+      <el-drawer
+        class="mind-map-drawer"
+        size="39%"
+        title="切换主题"
+        v-model="mindMapDrawerVisible"
+        @close="mindMapDrawerVisible = false"
+        modal-class="mind-map-drawer-model-class"
+        direction="rtl">
+        <el-space wrap :size="40">
+          <mind-map-theme-card
+            v-for="(item, index) in mindMapCardData"
+            :key="index"
+            :card-id="item.value"
+            :cardTitle="item.name"
+            :imgSrc="getImageSrc(item.value)"
+            @useThemeEvent="setMindeMapTheme"
+          />
+        </el-space>
+      </el-drawer>
+      <mind-map-panel  ref="mindMap" :data="mindMapData"  layout="mindMapLayout"></mind-map-panel>
+    </div>
+    <template #footer>
+      <el-button type="primary" @click="createAiMindMap">
+        智能生成
+      </el-button>
+      <el-button type="primary" @click="exportMindMap2PNG">
+        导出为PNG
+      </el-button>
+      <el-button type="primary" @click="mindMapDrawerVisible = true">
+        切换主题
+      </el-button>
+    </template>
   </el-dialog>
   <div>
     <formatting-template-dialog
@@ -72,13 +107,21 @@ import MenuColorItem from "./MenuColorItem.vue";
 import {reactive, ref} from "vue";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { UploadFilled } from '@element-plus/icons-vue'
-import {ElLoading, ElMessage} from 'element-plus';
+import {ArrowDown, UploadFilled} from '@element-plus/icons-vue'
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import axios from 'axios'
 import FormattingTemplateDialog from "./FormattingTemplateDialog.vue";
 import {useRoute} from "vue-router";
+import MindMapPanel from "./MindMapPanel.vue";
+import FormatEditorPanel from "./FormatEditorPanel.vue";
+import { themeList } from 'simple-mind-map/src/constants/constant'
+import MindMapThemeCard from "./MindMapThemeCard.vue";
 export default {
   components: {
+    MindMapThemeCard,
+    FormatEditorPanel,
+    ArrowDown,
+    MindMapPanel,
     FormattingTemplateDialog,
     UploadFilled,
     MenuButtonItem,
@@ -505,23 +548,28 @@ export default {
       {
         type: 'divider'
       },
-
       {
         icon: 'image-line',
         title: '插入图片',
         action: () => {
           if (props.editor.isEditable) {
-            const url = window.prompt('请输入图片 URL');
-            if (url) {
-              props.editor.chain().focus().setImage({ src: url }).run();
-            }
+            ElMessageBox.prompt('请输入图片 URL', '插入图片', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              inputPattern: /^(http|https):\/\/.*\.(jpg|jpeg|png|gif|svg)$/,
+              inputErrorMessage: '请输入有效的图片 URL'
+            }).then(({ value }) => {
+              props.editor.chain().focus().setImage({ src: value }).run();
+            }).catch(() => {
+              ElMessage.info('已取消插入图片');
+            });
           } else {
             ElMessage.warning("当前文档为只读状态，禁止编辑");
           }
         }
       },
       {
-        icon: 'file-pdf-2-fill',
+        icon: 'file-pdf-2-line',
         title: '导出为PDF',
         action: async () => {
           const htmlContent = props.editor.getHTML();
@@ -551,7 +599,7 @@ export default {
         }
       },
       {
-        icon: 'layout-horizontal-line',
+        icon: 'draft-line',
         title: '智能排版',
         action: () => {
           if (props.editor.isEditable) {
@@ -562,7 +610,7 @@ export default {
         }
       },
       {
-        icon: 'file-upload-line',
+        icon: 'character-recognition-line',
         title: '智能识别',
         action: () => {
           if (props.editor.isEditable) {
@@ -573,6 +621,13 @@ export default {
           } else {
             ElMessage.warning("当前文档为只读状态，禁止编辑");
           }
+        }
+      },
+      {
+        icon: 'mind-map',
+        title: '智能思维导图',
+        action: async () => {
+          mindMapDialogVisible.value = true;
         }
       },
     ]);
@@ -587,7 +642,6 @@ export default {
         ElMessage.error("请先上传一个文件");
         return;
       }
-
       const file = fileList.value[0]; // 假设只上传一个文件
       const fileExtension = file.name.split('.').pop(); // 获取最后一个点号后的部分作为文件后缀
       const formData = new FormData();
@@ -660,12 +714,12 @@ export default {
         .post(`/api/dialogue/addNewStr/${userId}/`, requestData)
         .then((response) => {
           // 处理成功响应
-          ElMessage.success("数据发送成功！");
+          ElMessage.success("知识录入成功！");
           loading.value = false;
         })
         .catch((error) => {
           // 处理错误响应
-          ElMessage.error("发送数据时出错！");
+          ElMessage.error("知识录入失败！");
           loading.value = false;
         });
     };
@@ -753,6 +807,15 @@ export default {
           })
           .then(response => {
             formatHtmlContent.value = response.data.response
+
+            const firstOpeningTagRegex = /<(?=[^>]*>)/;
+            const lastClosingTagRegex = /(?<=<[^>]*>)>/;
+
+            const firstOpeningTagMatch = formatHtmlContent.value.match(firstOpeningTagRegex);
+            const lastClosingTagMatch = formatHtmlContent.value.match(lastClosingTagRegex);
+
+            console.log("第一个 < 的位置:", firstOpeningTagMatch);
+            console.log("最后一个 > 的位置:", lastClosingTagMatch);
             props.editor.commands.clearContent()
             props.editor.commands.insertContent(formatHtmlContent.value)
           })
@@ -760,6 +823,59 @@ export default {
             // 关闭加载
             loading.close();
           });
+    }
+
+    // 控制mindmap面板显示的变量
+    const mindMapDialogVisible = ref(false)
+    // 初始化思维导图数据
+    const mindMapData = ref({
+      data: {
+        text: "根节点",
+      },
+      children: [],
+    });
+    const mindMapLayout = ref("logicalStructure")
+    // mindMapDom
+    const mindMap = ref(null);
+    // 设置加载状态
+    const mindMapLoading = ref(false);
+    // 智能创建思维导图
+    const createAiMindMap = async () => {
+      const htmlContent = props.editor.getHTML();
+      mindMapLoading.value = true
+      // 发送 htmlContent 到后端
+      try {
+        const response = await axios.post('/api/chat/mindmap/', {htmlContent});
+        console.log('Response from server:', response.data);
+        // 从后端接收到新的思维导图数据，并更新 mindMapData
+        mindMapData.value = response.data;
+        // 显式调用子组件的方法
+        mindMap.value.setMindMapData(mindMapData.value);
+        mindMapLoading.value = false;
+      } catch (error) {
+        ElMessage.error('Error sending htmlContent to server:', error);
+        mindMapLoading.value = false;
+      }
+    }
+
+    // 设置主题样式展示区
+    const mindMapDrawerVisible = ref(false)
+    const mindMapCardData = ref([])
+    mindMapCardData.value = themeList
+
+    // 动态返回主题示例图片
+    const getImageSrc = (url) => {
+      return new URL(`../../assets/mindMapThemeImg/${url}.png`, import.meta.url).href;
+    };
+
+    // 设置思维导图主题样式
+    const setMindeMapTheme = (themeValue) =>{
+      mindMap.value.setMindMapTheme(themeValue);
+    }
+
+    // 导出为PNG图片
+    const exportMindMap2PNG = () =>{
+      mindMap.value.exportMindMapData();
     }
 
     return {
@@ -779,7 +895,18 @@ export default {
       fileList,
       recognitionResult,
       formatDocument,
-      insertKnowledgeRepository
+      insertKnowledgeRepository,
+      mindMapDialogVisible,
+      mindMapData,
+      mindMapLayout,
+      mindMap,
+      mindMapLoading,
+      mindMapDrawerVisible,
+      mindMapCardData,
+      getImageSrc,
+      createAiMindMap,
+      setMindeMapTheme,
+      exportMindMap2PNG,
     };
   }
 };
@@ -828,12 +955,8 @@ export default {
   width: 100%;
 }
 
-.ai-multi-model-process-dialog-col{
 
+.mind-map-drawer-model-class{
+  position: absolute;
 }
-.ai-multi-model-process-dialog-button{
-
-}
-
-
 </style>

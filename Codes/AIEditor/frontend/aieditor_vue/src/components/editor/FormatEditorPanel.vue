@@ -37,7 +37,6 @@ import FontFamily from "@tiptap/extension-font-family";
 import Underline from "@tiptap/extension-underline";
 import CharacterCount from "@tiptap/extension-character-count";
 import Mathematics from "@tiptap-pro/extension-mathematics";
-import {getHierarchicalIndexes, TableOfContents} from "@tiptap-pro/extension-table-of-contents";
 import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -109,7 +108,9 @@ export default defineComponent({
         Placeholder.configure({
           placeholder: 'Write something …',
         }),
-        StarterKit,
+        StarterKit.configure({
+          codeBlock: false, // 排除codeBlock避免重复引用
+        }),
         Image,
         Typography,
         CodeBlockLowlight.extend({
@@ -122,8 +123,8 @@ export default defineComponent({
       ]
     })
     const updateContent = (content: string) => {
-      formatEditor.value.commands.clearContent();
-      formatEditor.value.commands.insertContent(content);
+      formatEditor.value?.commands.clearContent();
+      formatEditor.value?.commands.insertContent(content);
     };
     const onUse = () => {
       context.emit('useFormatEventPreview', props.cardId);

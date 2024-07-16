@@ -48,6 +48,7 @@
     "prosemirror-state": "^1.4.3",
     "remixicon": "^4.3.0",
     "sass": "^1.77.5",
+    "simple-mind-map": "^0.10.2-fix.1",
     "tiptap-extension-font-size": "^1.2.0",
     "vue": "^3.4.21",
     "vue-router": "^4.3.3"

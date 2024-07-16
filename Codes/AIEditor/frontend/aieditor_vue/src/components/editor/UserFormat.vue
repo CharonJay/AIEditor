@@ -23,8 +23,11 @@
         :card-id="String(card.id)"
         :card-title="card.name"
         :img-src="card.image_path"
+        :is-delete-visible="true"
         @previewEvent="showDrawer(card)"
-        @useFormatEvent="onUse">
+        @useFormatEvent="onUse"
+        @deleteCardEvent="deleteCard"
+      >
       </formatting-card>
     </el-space>
   </div>
@@ -35,6 +38,7 @@ import {defineComponent, onMounted, ref} from 'vue';
 import FormattingCard from "./FormattingCard.vue";
 import FormatEditorPanel from "./FormatEditorPanel.vue"
 import axios from "axios";
+import {ElMessage} from "element-plus";
 
 export default defineComponent({
   name: 'UserFormat',
@@ -42,15 +46,20 @@ export default defineComponent({
     FormatEditorPanel,
     FormattingCard
   },
-  setup(props, context)  {
+  props: {
+    // 定义组件的 props
+    propA: String,
+  },
+  setup(props, context) {
+    const propAValue = ref(props.propA); // 使用 props 中的属性,仅用于避免props报错
+    propAValue.value = "测试"
     const drawerVisible = ref(false);
-    const cards = ref([]);
-      const selectedId = ref('');
+    const cards = ref<any[]>([]); // 假设 cards 是一个 ref 数组，类型为 any[]
+    const selectedId = ref('');
     const selectedContent = ref('');
     const selectedCardTitle = ref('');
     const selectedImgSrc = ref('');
-    const formatEditorPanel = ref(null);
-
+    const formatEditorPanel = ref<any>(null); // 假设 formatEditorPanel 是一个 ref 对象，类型为 any
 
     const username = localStorage.getItem("username")
     const fetchCards = async () => {
@@ -67,13 +76,33 @@ export default defineComponent({
       selectedCardTitle.value = card.name;
       selectedImgSrc.value = card.image_path;
       drawerVisible.value = true;
-      formatEditorPanel.value.updateContent(card.content);
+      // 检查 formatEditorPanel 是否存在
+      if (formatEditorPanel.value) {
+        formatEditorPanel.value.updateContent(card.content);
+      } else {
+        console.error("formatEditorPanel is not initialized.");
+      }
     };
 
     const onUse = (cardId: string) => {
       drawerVisible.value = false
       context.emit('useFormat', cardId);
     };
+
+    const deleteCard = async (cardId: string) => {
+      try {
+        await axios.delete(`/api/user/template/${cardId}/`);
+        ElMessage.success("模板删除成功！")
+        // 更新界面
+        const index = cards.value!.findIndex(card => String(card.id) === cardId);
+        if (index !== -1) {
+          cards.value.splice(index, 1); // 从 cards 数组中移除已删除的卡片
+        }
+      } catch (error) {
+        ElMessage.error("模板删除失败！")
+      }
+    };
+
     onMounted(fetchCards);
     return {
       drawerVisible,
@@ -84,9 +113,11 @@ export default defineComponent({
       formatEditorPanel,
       selectedImgSrc,
       showDrawer,
-      onUse
+      onUse,
+      deleteCard
     };
   }
+
 });
 </script>
 
@@ -96,5 +127,8 @@ export default defineComponent({
 }
 .option-drawer{
   position: absolute;
+}
+.formatEmpty{
+  width: 100%;
 }
 </style>

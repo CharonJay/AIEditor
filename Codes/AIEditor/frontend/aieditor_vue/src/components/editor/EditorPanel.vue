@@ -89,20 +89,24 @@
             </div>
           </template>
         </el-dialog>
-        <el-drawer v-model="knowledgeRepositoryDrawer" title="管理知识库"  :before-close="knowledgeRepositoryDrawerHandleClose">
-          <template #header>
-            <h4>管理知识库</h4>
-            <el-button class="knowledgeUploadPDFButton" type="primary" @click="showKnowledgeUploadDialog">新增</el-button>
-          </template>
-            <knowledge-repository-card
-              v-for="(card, index) in knowledgeCards"
-              :key="index"
-              class="knowledge-repository-card"
-              :title="card.source"
-              :content="card.content"
-              @documentDeleted="fetchKnowledgeCards"
-            ></knowledge-repository-card>
-        </el-drawer>
+        <div class="knowledgeRepositoryDrawer">
+          <el-drawer v-model="knowledgeRepositoryDrawerVisible" title="管理知识库" :before-close="knowledgeRepositoryDrawerHandleClose">
+            <template #header>
+              <h4>管理知识库</h4>
+              <el-button class="knowledgeUploadPDFButton" type="primary" @click="showKnowledgeUploadDialog">新增</el-button>
+            </template>
+            <el-space wrap :size="30">
+              <knowledge-repository-card
+                v-for="(card, index) in knowledgeCards"
+                :key="index"
+                class="knowledge-repository-card"
+                :title="card.source"
+                :content="card.content"
+                @documentDeleted="fetchKnowledgeCards"
+              ></knowledge-repository-card>
+            </el-space>
+          </el-drawer>
+        </div>
         <el-header class="header-menu">
           <div class="editor-menu" v-if="editor">
             <MenuBar :editor="editor" />
@@ -116,19 +120,24 @@
             >
             <div class="bubble-menu-button">
               <el-button-group >
-                <el-button @click="polishText">
+                <el-button @click="polishText" text bg>
+                  <i class="ri-bard-line"></i>
                   润色
                 </el-button>
-                <el-button @click="summaryText">
+                <el-button @click="summaryText" text bg>
+                  <i class="ri-file-list-3-line"></i>
                   摘要
                 </el-button>
-                <el-button @click="continueText">
+                <el-button @click="continueText" text bg>
+                  <i class="ri-edit-2-line"></i>
                   续写
                 </el-button>
-                <el-button @click="correctText">
+                <el-button @click="correctText" text bg>
+                  <i class="ri-first-aid-kit-line"></i>
                   病句修改
                 </el-button>
-                <el-button @click="translateText">
+                <el-button @click="translateText"  text bg>
+                  <i class="ri-translate"></i>
                   翻译
                 </el-button>
               </el-button-group>
@@ -198,6 +207,7 @@ import MenuBar from './MenuBar.vue';
 import ChatBox from './Chat.vue'; // 确保路径正确
 import CodeBlockComponent from './CodeBlockComponent.vue';
 import TocPanel from "./TocPanel.vue";
+import MindMapPanel from "./MindMapPanel.vue";
 import textEnhancements from '../../custom_extensions/textEnhancements.js'; // 引入自定义的扩展
 
 
@@ -207,9 +217,10 @@ import {onMounted, ref} from "vue";
 import 'katex/dist/katex.min.css';
 import '../../assets/EditorPanel.css';
 import '../../assets/TiptapStyle.css';
+import '../../assets/remixicon/remixicon.css'
 import axios from "axios";
 import KnowledgeRepositoryCard from "./KnowledgeRepositoryCard.vue";
-import {ElMessage} from "element-plus";
+import {ElLoading, ElMessage} from "element-plus";
 
 import { defineProps, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -224,6 +235,7 @@ export default {
     ArrowDown,
     EditorContent,
     TocPanel,
+    MindMapPanel,
     ChatBox,
     MenuBar,
     BubbleMenu,
@@ -273,8 +285,8 @@ export default {
       const regex = /\s*(id|data-toc-id)="[^"]*"/g;
       // 使用正则表达式替换匹配的部分为空字符串，即删除匹配的部分
       const cleanedText = htmlContent.replace(regex, '');
+      initHtmlContent.value = cleanedText;
       saveTime.value =' 文档已保存 ' + new Date().toLocaleString();
-      console.log(cleanedText)
       // 更新文档标题
       const $doc = editor.value.$doc;
       const firstH1 = $doc.querySelector("heading", { level: 1 });
@@ -357,7 +369,7 @@ export default {
       }
     };
 
-    const knowledgeRepositoryDrawer = ref(false) //知识库管理抽屉显示状态
+    const knowledgeRepositoryDrawerVisible = ref(false) //知识库管理抽屉显示状态
     const knowledgeUploadDialogVisible = ref(false)
 
     const fileList = ref([]);  // 文件列表
@@ -416,10 +428,10 @@ export default {
     };
     const openKnowledgeRepositoryDrawer = () => {
       fetchKnowledgeCards();
-      knowledgeRepositoryDrawer.value = true;
+      knowledgeRepositoryDrawerVisible.value = true;
     }
     const knowledgeRepositoryDrawerHandleClose = () => {
-        knowledgeRepositoryDrawer.value = false;
+        knowledgeRepositoryDrawerVisible.value = false;
     }
     const showKnowledgeUploadDialog = () =>{
       fileList.value = []; // 清空上传的文件列表
@@ -434,6 +446,12 @@ export default {
         ElMessage.error("请先上传一个文件");
         return;
       }
+
+      // 显示加载状态
+      const loadingInstance = ElLoading.service({
+        lock: true,
+        text: '知识添加中...',
+      });
 
       const file = fileList.value[0]; // 假设只上传一个文件
       const formData = new FormData();
@@ -453,6 +471,10 @@ export default {
         })
         .catch((error) => {
           ElMessage.error("新知识添加失败！");
+        })
+        .finally(() => {
+          // 隐藏加载状态
+          loadingInstance.close();
         });
     }
 
@@ -501,7 +523,7 @@ export default {
 
     const toc = ref([])
     const editor = useEditor({
-     content: initHtmlContent.value,
+      content: initHtmlContent.value,
       extensions: [
         Highlight,
         TaskList,
@@ -540,7 +562,10 @@ export default {
         Placeholder.configure({
           placeholder: '写点什么吧...',
         }),
-        StarterKit,
+        StarterKit.configure({
+          codeBlock: false, // 排除codeBlock避免重复引用
+          dropcursor:false, // 排除dropcursor避免重复引用
+        }),
         Image.configure({
           inline: true,
         }),
@@ -656,7 +681,7 @@ export default {
       fileState,
       fileStateType,
       initHtmlContent,
-      knowledgeRepositoryDrawer,
+      knowledgeRepositoryDrawerVisible,
       knowledgeUploadDialogVisible,
       fileList,
       saveDocument,
@@ -697,14 +722,20 @@ export default {
 
 
 <style scoped lang="scss">
-
+.bubble-menu-button {
+  width: 25vw;
+}
 .header-dropdown-menu-file {
   cursor: pointer;
 }
+.knowledgeRepositoryDrawer:deep(.el-drawer__header) {
+  margin-bottom: 0;
+  padding: 10px;
+}
+
 .knowledge-repository-card{
   width: 100%;
   height: 20rem;
-  margin-top: 10px;
 }
 .title-text {
   font-weight: bold;

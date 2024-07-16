@@ -1,6 +1,5 @@
 <template>
     <div class="app">
-
     <div class="main-content">
       <RouterView>
       </RouterView>
@@ -9,7 +8,11 @@
 </template>
 
 <script>
+import { defineComponent } from 'vue';
 
+export default defineComponent({
+    // 组件选项
+});
 </script>
 
 <style>

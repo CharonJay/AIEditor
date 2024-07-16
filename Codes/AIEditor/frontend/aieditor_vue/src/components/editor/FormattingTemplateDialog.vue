@@ -18,7 +18,7 @@
         </el-menu>
       </el-aside>
       <!-- 主内容区域 -->
-      <el-main class="formatting-template-dialog-main" >
+      <el-main class="formatting-template-dialog-main">
         <component :is="getContentComponent(activeMenuItem)"
                    @useFormat="handleUseFormat"/>
       </el-main>

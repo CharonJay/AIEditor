@@ -19,7 +19,7 @@
         </el-dropdown>
       </div>
     </template>
-    <div>{{ content }}</div>
+    <div class="card-content">{{ trimmedContent }}</div>
     <div class="knowledgeCardDialog">
       <el-dialog
         v-model="knowledgeCardDialogVisible"
@@ -38,12 +38,11 @@
         </template>
       </el-dialog>
     </div>
-
   </el-card>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import {computed, defineComponent, ref} from 'vue';
 import { ArrowDown } from '@element-plus/icons-vue';
 import {ElMessage, ElMessageBox, ElMessageBoxOptions} from 'element-plus';
 import axios from "axios";
@@ -78,42 +77,47 @@ export default defineComponent({
         });
     };
 
-      const handleDelete = () => {
-        const options: ElMessageBoxOptions = {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning',
-        };
-
-        ElMessageBox.confirm('确定要删除吗?', '警告', options)
-          .then(async () => {
-            const userId = localStorage.getItem("user_id");
-            const requestData = {
-              name: props.title  // Adjusted to match backend's expected 'name' field
-            };
-
-            axios
-              .post(`/api/dialogue/deleteDocument/${userId}/`, JSON.stringify(requestData), {
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              })
-              .then((response) => {
-                // Handle successful response
-                ElMessage.success("知识删除成功！");
-                context.emit('documentDeleted');
-              })
-              .catch((error) => {
-                // Handle error response
-                ElMessage.error("知识删除失败！");
-              });
-          })
-          .catch(() => {
-            // Handle cancel or dismiss
-            ElMessage.info('取消删除操作');
-          });
+    const handleDelete = () => {
+      const options: ElMessageBoxOptions = {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
       };
 
+      ElMessageBox.confirm('确定要删除吗?', '警告', options)
+        .then(async () => {
+          const userId = localStorage.getItem("user_id");
+          const requestData = {
+            name: props.title  // Adjusted to match backend's expected 'name' field
+          };
+
+          axios
+            .post(`/api/dialogue/deleteDocument/${userId}/`, JSON.stringify(requestData), {
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            })
+            .then(() => {
+              ElMessage.success("知识删除成功！");
+              context.emit('documentDeleted');
+            })
+            .catch(() => {
+              ElMessage.error("知识删除失败！");
+            });
+        })
+        .catch(() => {
+          ElMessage.info('取消删除操作');
+        });
+    };
+
+    // 内容超出card部分添加省略号
+    const trimmedContent = computed(() => {
+      if (props.content.length > 310) {
+        return props.content.slice(0, 310) + '......';
+      } else {
+        return props.content;
+      }
+    });
 
     const handlePreview = () => {
       knowledgeCardDialogVisible.value = true;
@@ -125,6 +129,7 @@ export default defineComponent({
 
     return {
       knowledgeCardDialogVisible,
+      trimmedContent,
       handleRename,
       handleDelete,
       handlePreview,
@@ -141,10 +146,14 @@ export default defineComponent({
   align-items: center;
 }
 
+.card-content {
+  overflow: hidden;
+  text-align: left;
+}
+
 .drop-down-knowledge-repository {
   cursor: pointer;
 }
-
 
 .knowledgeCardDialog {
   ::v-deep .el-dialog {
