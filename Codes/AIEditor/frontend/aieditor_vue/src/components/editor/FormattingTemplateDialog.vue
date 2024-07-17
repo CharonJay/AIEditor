@@ -30,8 +30,8 @@
 import { defineComponent, ref, Component } from 'vue';
 
 // 导入各个选项的组件
-import UserFormat from './UserFormat.vue';
-import OfficialFormat from './OfficialFormat.vue';
+import UserFormat from '@/components/editor/UserFormat.vue';
+import OfficialFormat from '@/components/editor/OfficialFormat.vue';
 
 
 export default defineComponent({

@@ -100,22 +100,22 @@
 </template>
 
 <script>
-import MenuButtonItem from './MenuButtonItem.vue';
-import MenuOptionItem from "./MenuOptionItem.vue";
-import MenuButtonDropdownItem from "./MenuButtonDropdownItem.vue";
-import MenuColorItem from "./MenuColorItem.vue";
+import MenuButtonItem from '@/components/editor/MenuButtonItem.vue';
+import MenuOptionItem from "@/components/editor/MenuOptionItem.vue";
+import MenuButtonDropdownItem from "@/components/editor/MenuButtonDropdownItem.vue";
+import MenuColorItem from "@/components/editor/MenuColorItem.vue";
 import {reactive, ref} from "vue";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {ArrowDown, UploadFilled} from '@element-plus/icons-vue'
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import axios from 'axios'
-import FormattingTemplateDialog from "./FormattingTemplateDialog.vue";
+import FormattingTemplateDialog from "@/components/editor/FormattingTemplateDialog.vue";
 import {useRoute} from "vue-router";
-import MindMapPanel from "./MindMapPanel.vue";
-import FormatEditorPanel from "./FormatEditorPanel.vue";
+import MindMapPanel from "@/components/editor/MindMapPanel.vue";
+import FormatEditorPanel from "@/components/editor/FormatEditorPanel.vue";
 import { themeList } from 'simple-mind-map/src/constants/constant'
-import MindMapThemeCard from "./MindMapThemeCard.vue";
+import MindMapThemeCard from "@/components/editor/MindMapThemeCard.vue";
 export default {
   components: {
     MindMapThemeCard,

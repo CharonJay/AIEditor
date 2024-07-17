@@ -51,6 +51,58 @@
             </div>
           </template>
         </el-dialog>
+        <div>
+          <el-dialog @before-close="bubbleMenuVisible=true" class="str2imgDialogMenu" v-model="dialogFormVisible" title="智能绘图" width="500">
+            <el-form :model="form">
+              <!-- Form fields -->
+              <el-form-item label="图片名称" :label-width="formLabelWidth">
+                <el-input v-model="form.imageName" placeholder="图片名称" />
+              </el-form-item>
+              <el-form-item label="风格" :label-width="formLabelWidth">
+                <el-select v-model="form.style" placeholder="请输入风格" filterable allow-create>
+                  <el-option v-for="item in styleOptions" :key="item" :label="item" :value="item" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="主体" :label-width="formLabelWidth">
+                <el-select v-model="form.subject" placeholder="请输入主体" filterable allow-create>
+                  <el-option v-for="item in subjectOptions" :key="item" :label="item" :value="item" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="描述" :label-width="formLabelWidth">
+                <el-select v-model="form.description" placeholder="请输入描述" filterable allow-create multiple>
+                  <el-option v-for="item in descriptionOptions" :key="item" :label="item" :value="item" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="效果" :label-width="formLabelWidth">
+                <el-select v-model="form.effect" placeholder="请输入效果" filterable allow-create>
+                  <el-option v-for="item in effectOptions" :key="item" :label="item" :value="item" />
+                </el-select>
+              </el-form-item>
+              <el-form-item label="其他内容" :label-width="formLabelWidth">
+                <el-input v-model="form.otherContent" placeholder="请输入其他内容" />
+              </el-form-item>
+            </el-form>
+            <template #footer>
+              <div class="dialog-footer">
+                <el-button @click="dialogFormVisible = false; bubbleMenuVisible=true">取消</el-button>
+                <el-button type="primary" @click="handleSubmit">确定</el-button>
+              </div>
+            </template>
+          </el-dialog>
+          <el-dialog @before-close="bubbleMenuVisible=true" class="str2imgDialogImg" v-model="dialogImageVisible" title="生成图片" width="600">
+            <div v-if="imageUrl">
+              <img :src="imageUrl" alt="生成的图片" style="width: 100%;" />
+            </div>
+            <div v-else>
+              <p>正在绘制，请稍等...</p>
+            </div>
+            <template #footer>
+              <div class="dialog-footer">
+                <el-button v-if="imageUrl" @click="insertImage">插入</el-button>
+              </div>
+            </template>
+          </el-dialog>
+    </div>
         <el-dialog
             class="knowledge-upload-dialog"
             v-model="knowledgeUploadDialogVisible"
@@ -140,6 +192,10 @@
                   <i class="ri-translate"></i>
                   翻译
                 </el-button>
+                <el-button @click="dialogFormVisible = true; bubbleMenuVisible=false"  text bg>
+                  <i class="ri-translate"></i>
+                  文生图
+                </el-button>
               </el-button-group>
             </div>
           </bubble-menu>
@@ -203,28 +259,30 @@ lowlight.registerLanguage('ts',ts);
 
 
 
-import MenuBar from './MenuBar.vue';
-import ChatBox from './Chat.vue'; // 确保路径正确
-import CodeBlockComponent from './CodeBlockComponent.vue';
-import TocPanel from "./TocPanel.vue";
-import MindMapPanel from "./MindMapPanel.vue";
-import textEnhancements from '../../custom_extensions/textEnhancements.js'; // 引入自定义的扩展
+import MenuBar from '@/components/editor/MenuBar.vue';
+import ChatBox from '@/components/editor/Chat.vue';
+import CodeBlockComponent from '@/components/editor/CodeBlockComponent.vue';
+import TocPanel from "@/components/editor/TocPanel.vue";
+import MindMapPanel from "@/components/editor/MindMapPanel.vue";
+import KnowledgeRepositoryCard from "@/components/editor/KnowledgeRepositoryCard.vue";
 
+import textEnhancements from '@/custom_extensions/textEnhancements.js'; // 引入自定义的扩展
 
-
-import {onMounted, ref} from "vue";
+import {reactive, onMounted, ref} from "vue";
+import {ElLoading, ElMessage, ElMessageBox} from "element-plus";
+import axios from "axios";
+import { defineProps} from "vue";
+import { useRoute } from "vue-router";
 
 import 'katex/dist/katex.min.css';
-import '../../assets/EditorPanel.css';
-import '../../assets/TiptapStyle.css';
-import '../../assets/remixicon/remixicon.css'
-import axios from "axios";
-import KnowledgeRepositoryCard from "./KnowledgeRepositoryCard.vue";
-import {ElLoading, ElMessage} from "element-plus";
+import '@/assets/EditorPanel.css';
+import '@/assets/TiptapStyle.css';
+import '@/assets/remixicon/remixicon.css'
 
-import { defineProps, watch } from "vue";
-import { useRoute } from "vue-router";
-import router from "../../router/index.ts";
+import router from "@/router/index.ts";
+
+
+
 
 export default {
   name: 'EditorPanel',
@@ -674,6 +732,76 @@ export default {
 
     const leftAsideVisable = ref(false)
 
+    const form = reactive({
+      style: '',
+      subject: '',
+      description: [],
+      effect: '',
+      imageName: '',
+      otherContent: '',
+    })
+  
+    const styleOptions = [
+      '古风', '二次元', '写实风格', '浮世绘', '未来主义', '像素风格', '概念艺术', '赛博朋克', '洛丽塔风格',
+      '巴洛克风格', '超现实主义', '水彩画', '蒸汽波艺术', '油画', '卡通画', '梵高', '罗伊里奇', '莫奈',
+      '毕加索', '毕沙罗', '多雷', '齐白石', '艺术创想', '唯美二次元', '怀旧漫画风', '中国风', '概念插画',
+      '明亮插画', '梵高', '超现实主义', '动漫风', '插画', '像素艺术', '炫彩插画'
+    ]
+  
+    const subjectOptions = [
+      '老人', '童话世界', '兔子', '老照片', '超级英雄', '竹林', '日出', '少女'
+    ]
+  
+    const descriptionOptions = [
+      '星辰大海', '盛世牡丹', '晶莹剔透', '喜闻乐见', '星月神话', '满庭芬芳', '精致面容', '对称美学', '唯美',
+      '看镜头', '精致美丽的五官', '华丽装饰', '绝美头饰', '浪漫色调', '几何构成', '丰富细节', '虚幻引擎'
+    ]
+  
+    const effectOptions = [
+      '高清8k壁纸', '极致细节', '精细刻画', '超高清', '优化效果', '令人惊叹的3D渲染', '灵感艺术', '完美光影精美的CG',
+      '剧照', '色彩丰富', '建筑素描', '3D风格', '真实感', '超写实风', '高对比度', '马卡龙质感', '完美彩色炫酷涂装',
+      '流线型外观设计', '低纯度色调', '高纯度色调', '多色彩搭配', '光影追踪', '宫崎骏风格', '电影瞬间', '层次感'
+    ]
+    const dialogFormVisible = ref(false)
+    const dialogImageVisible = ref(false)
+    const imageUrl = ref('')
+    const formLabelWidth = '140px'
+    const handleSubmit = async () => {
+      if (!form.subject) {
+        ElMessageBox.alert('请填写主体内容', '提示', {
+          confirmButtonText: '确定',
+          type: 'warning',
+        })
+        return
+      }
+
+      if (!form.imageName) {
+        form.imageName = 'picture'
+      }
+
+      try {
+        dialogImageVisible.value = true  // 显示正在绘制的对话框
+        imageUrl.value = ''  // 清空之前的图片 URL
+
+        const response = await axios.post('/api/chat/generate-image/', form)
+        if (response.data.img_url) {
+          imageUrl.value = response.data.img_url
+          console.log('表单提交成功:', response.data)
+        } else {
+          console.error('图片生成失败:', response.data)
+        }
+      } catch (error) {
+        console.error('表单提交失败:', error)
+      }
+    }
+  
+    const insertImage = () => {
+      // 插入图片的逻辑，例如将图片 URL 插入到富文本编辑器
+      console.log('插入图片:', imageUrl.value)
+      bubbleMenuVisible.value = true
+      dialogImageVisible.value = false
+    }
+    
     return {
       goBack,
       titleText,
@@ -712,7 +840,18 @@ export default {
       insertText,
       loading,
       bubbleMenuVisible,
-      leftAsideVisable
+      leftAsideVisable,
+      styleOptions,
+      subjectOptions,
+      descriptionOptions,
+      effectOptions,
+      handleSubmit,
+      dialogImageVisible,
+      dialogFormVisible,
+      formLabelWidth,
+      insertImage,
+      form,
+      imageUrl
     }
   }
 }
@@ -723,7 +862,7 @@ export default {
 
 <style scoped lang="scss">
 .bubble-menu-button {
-  width: 25vw;
+  width: 30vw;
 }
 .header-dropdown-menu-file {
   cursor: pointer;

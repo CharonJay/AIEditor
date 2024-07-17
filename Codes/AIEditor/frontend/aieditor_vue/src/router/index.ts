@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import Chat from '../components/editor/Chat.vue'; // 聊天界面组件
-import Space from '../views/Space.vue'; // 个人中心组件
-import LoginView from "../views/LoginView.vue";
-import EditorPanel from '../components/editor/EditorPanel.vue';
+import Chat from '@/components/editor/Chat.vue'; // 聊天界面组件
+import Space from '@/views/Space.vue'; // 个人中心组件
+import LoginView from "@/views/LoginView.vue";
+import EditorPanel from '@/components/editor/EditorPanel.vue';
 
 
 const routes = [

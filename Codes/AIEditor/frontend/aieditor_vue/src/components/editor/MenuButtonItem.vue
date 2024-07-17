@@ -5,14 +5,12 @@
       :title="title"
       link
     >
-    <svg class="remix">
-      <use :xlink:href="`${iconUrl}#ri-${icon}`" />
-    </svg>
+        <i :class="`ri-${icon} icon ri-lg` "></i>
     </el-button>
 </template>
 
 <script>
-import remixiconUrl from 'remixicon/fonts/remixicon.symbol.svg'
+import '@/assets/remixicon/remixicon.css'
 import {ElButton} from 'element-plus'
 import {ref} from "vue";
 
@@ -36,9 +34,7 @@ export default {
     },
   },
   setup() {
-    const iconUrl = ref(remixiconUrl)
     return {
-      iconUrl
     }
   }
 }
@@ -55,11 +51,10 @@ export default {
   align-items: center;
 }
 
-.remix {
-  width: 1.25rem !important; /* 修改图标的宽度 */
-  height: 1.25rem !important; /* 修改图标的高度 */
+.icon {
+  width: 1.5rem !important; /* 修改图标的宽度 */
+  height: 0.75rem !important; /* 修改图标的高度 */
   fill: currentColor; /* 修改图标的颜色 */
 }
-
 
 </style>

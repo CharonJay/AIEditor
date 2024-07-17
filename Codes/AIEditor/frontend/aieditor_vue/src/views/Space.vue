@@ -58,10 +58,8 @@
 
 <script lang="ts", name="Space">
 import { useRouter } from 'vue-router';
-// import AllFilesComponent from '../components/space/AllFilesComponent.vue';
-import TrashComponent from '../components/space/TrashComponent.vue';
-// import ShareComponent from '../components/space/ShareComponent.vue';
-import CreateComponent from '../components/space/CreateComponent.vue';
+import TrashComponent from '@/components/space/TrashComponent.vue';
+import CreateComponent from '@/components/space/CreateComponent.vue';
 import { onMounted } from 'vue';
 import { ref } from 'vue'
 import axios from 'axios';

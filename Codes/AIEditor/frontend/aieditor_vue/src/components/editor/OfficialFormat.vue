@@ -33,8 +33,8 @@
 
 <script lang="ts">
 import {defineComponent, onMounted, ref} from 'vue';
-import FormattingCard from "./FormattingCard.vue";
-import FormatEditorPanel from "./FormatEditorPanel.vue"
+import FormattingCard from "@/components/editor/FormattingCard.vue";
+import FormatEditorPanel from "@/components/editor/FormatEditorPanel.vue"
 import axios from "axios";
 
 export default defineComponent({

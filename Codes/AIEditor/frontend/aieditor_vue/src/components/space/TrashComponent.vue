@@ -30,22 +30,22 @@
     const handleDelete = async(index, flag) => {
         if (flag) {
             console.log(index)
-            await axios.delete(`http://localhost:8000/user/files/deletefile/${index}/`)
-            const response = await fetch('http://localhost:8000/user/filesMenu/trash/'+localStorage.getItem('username')+'/')
+            await axios.delete(`/api/user/files/deletefile/${index}/`)
+            const response = await fetch('/api/user/filesMenu/trash/'+localStorage.getItem('username')+'/')
             const data = await response.json()
             files.value = data
         }else {
-            await axios.patch(`http://localhost:8000/user/files/updatefile/${index}/`,{
+            await axios.patch(`/api/user/files/updatefile/${index}/`,{
                 status: 0
             })
-            const response = await fetch('http://localhost:8000/user/filesMenu/trash/'+localStorage.getItem('username')+'/')
+            const response = await fetch('/api/user/filesMenu/trash/'+localStorage.getItem('username')+'/')
             const data = await response.json()
             files.value = data
         }
     }
 
     onMounted(async () => {
-        const response = await fetch('http://localhost:8000/user/filesMenu/trash/'+localStorage.getItem('username')+'/')
+        const response = await fetch('/api/user/filesMenu/trash/'+localStorage.getItem('username')+'/')
         const data = await response.json()
         files.value = data
     })

@@ -10,7 +10,7 @@
 
 <script>
 
-import Toc from "./Toc.vue";
+import Toc from "@/components/editor/Toc.vue";
 export default {
   name: 'CustomToc', // 组件名称
   components: {

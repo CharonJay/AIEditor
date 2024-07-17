@@ -44,7 +44,7 @@
 import {ref, onMounted, reactive} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import axios from 'axios';
-import EditorPanel from '../editor/EditorPanel.vue';
+import EditorPanel from '@/components/editor/EditorPanel.vue';
 
 
 const files = ref([])

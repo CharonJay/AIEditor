@@ -28,7 +28,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import '../../assets/remixicon/remixicon.css'
+import '@/assets/remixicon/remixicon.css'
 import {ElMessage, ElMessageBox, ElMessageBoxOptions} from "element-plus";
 
 export default defineComponent({

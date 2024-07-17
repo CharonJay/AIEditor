@@ -42,13 +42,13 @@ import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Typography from "@tiptap/extension-typography";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import CodeBlockComponent from "./CodeBlockComponent.vue";
+import CodeBlockComponent from "@/components/editor/CodeBlockComponent.vue";
 import {lowlight} from "lowlight/lib/core";
 import Color from "@tiptap/extension-color";
-import textEnhancements from "../../custom_extensions/textEnhancements";
+import textEnhancements from "@/custom_extensions/textEnhancements";
 
 
-import '../../assets/TiptapStyle.css';
+import '@/assets/TiptapStyle.css';
 export default defineComponent({
   name: "FormatEditorPanel",
   props: {

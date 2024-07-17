@@ -56,7 +56,7 @@
     import { ref, reactive } from 'vue'
     import { onMounted } from 'vue';
     import axios from 'axios';
-    import router from '../router';
+    import router from '@/router';
 
     const container = ref()
     const loginForm = ref()
@@ -116,7 +116,7 @@
         registerForm.value.validate(async(valid:any) => {
             if (valid) {
                 try {
-                    const response = await fetch('http://127.0.0.1:8000/user/register', {
+                    const response = await fetch('/api/user/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -147,7 +147,7 @@
         loginForm.value.validate(async(valid:any) => {
             if (valid) {
                 try{
-                    const response = await axios.post('http://127.0.0.1:8000/user/token', {
+                    const response = await axios.post('http://192.168.1.101:8080/user/token', {
                         username: login_form.value.loginName,
                         password: login_form.value.loginPassword,
                     })

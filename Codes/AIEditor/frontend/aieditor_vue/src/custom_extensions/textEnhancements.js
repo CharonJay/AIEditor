@@ -13,7 +13,7 @@ export default Extension.create({
 
         // 定义并调用摘要函数
         const summary = (text, callback) => {
-          let url = 'http://localhost:8000/chat/getsummary/'; // 访问后端接口的url
+          let url = '/api/chat/getsummary/'; // 访问后端接口的url
           axios.post(url, { message: text.trim() })
             .then(res => {
               callback(res.data);
@@ -37,7 +37,7 @@ export default Extension.create({
         const polish = (text, callback) => {
           let formData = new FormData();
           formData.append('message', text.trim());
-          let url = 'http://localhost:8000/chat/getpolish/'; // 访问后端接口的url
+          let url = '/api/chat/getpolish/'; // 访问后端接口的url
           axios.post(url, { message: text.trim() })
             .then(res => {
               callback(res.data);
@@ -60,7 +60,7 @@ export default Extension.create({
         const continuation = (text, callback) => {
           let formData = new FormData();
           formData.append('message', text.trim());
-          let url = 'http://localhost:8000/chat/getcontinuation/'; // 访问后端接口的url
+          let url = '/api/chat/getcontinuation/'; // 访问后端接口的url
           axios.post(url, { message: text.trim() })
             .then(res => {
               callback(res.data);
@@ -83,7 +83,7 @@ export default Extension.create({
         const correct = (text, callback) => {
           let formData = new FormData();
           formData.append('message', text.trim());
-          let url = 'http://localhost:8000/chat/getcorrection/'; // 访问后端接口的url
+          let url = '/api/chat/getcorrection/'; // 访问后端接口的url
           axios.post(url, { message: text.trim() })
             .then(res => {
               callback(res.data);
@@ -106,7 +106,7 @@ export default Extension.create({
         const translate = (text, callback) => {
           let formData = new FormData();
           formData.append('message', text.trim());
-          let url = 'http://localhost:8000/chat/gettranslation/'; // 访问后端接口的url
+          let url = '/api/chat/gettranslation/'; // 访问后端接口的url
           axios.post(url, { message: text.trim() })
             .then(res => {
               callback(res.data);

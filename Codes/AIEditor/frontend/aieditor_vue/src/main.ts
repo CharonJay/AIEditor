@@ -1,19 +1,21 @@
 import { createApp } from 'vue'
 
-import App from './App.vue'
+import App from '@/App.vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import 'element-plus/theme-chalk/index.css'
 import * as ElementPlusIcons from '@element-plus/icons-vue'
 import axios from 'axios';
 
-import router from './router';
+// @ts-ignore
+import router from '@/router';
 
 import 'element-plus/theme-chalk/index.css'
 import 'remixicon/fonts/remixicon.css'
 import 'katex/dist/katex.min.css';
 
-import { refreshToken } from './utils/auth';
+// @ts-ignore
+import { refreshToken } from '@/utils/auth';
 
 const app = createApp(App)
 
