@@ -14,6 +14,12 @@
                     <el-form-item label="邮箱" label-width="80px" class="form-item" prop="registerEmail">
                         <el-input v-model="register_form.registerEmail" placeholder="请输入邮箱"></el-input>
                     </el-form-item>
+                    <el-form-item label="验证码"  label-width="80px" class="form-item">
+                        <el-input placeholder="请输入验证码" v-model="sidentifyMode" ></el-input>
+                    </el-form-item>
+                    <div class="code" @click="refreshCode">
+                        <Sidentify :identifyCode="identifyCode"></Sidentify>
+                    </div>
                     <el-button type="primary" @click="handleRegister">注册</el-button>
                 </el-form>
             </div>
@@ -27,6 +33,7 @@
                     <el-form-item label="密码" label-width="80px" class="form-item" prop="loginPassword">
                         <el-input type="password" v-model="login_form.loginPassword" placeholder="请输入密码"></el-input>
                     </el-form-item>
+
                     <el-button type="primary" @click="handleLogin">登陆</el-button>
                 </el-form>
             </div>
@@ -34,13 +41,13 @@
             <div class="overlay-container">
                 <div class="overlay">
                     <div class="overlay-panel overlay-left">
-                        <h1>智能在线编辑器</h1>
+                        <h1>文心一编</h1>
                         <h2>已有帐号？</h2>
                         <p>点我去进行登陆吧。</p>
                         <button class='ghost' @click="toSignIn">登陆</button>
                     </div>
                     <div class="overlay-panel overlay-right">
-                        <h1>智能在线编辑器</h1>
+                        <h1>文心一编</h1>
                         <h2>没有帐号？</h2>
                         <p>去注册一个属于你的账号吧。</p>
                         <!-- <a href="#">忘记密码？</a> -->
@@ -58,11 +65,34 @@
     import axios from 'axios';
     import router from '@/router';
 
+    import Sidentify from '@/components/Sidentify.vue';
+    import { ElMessage } from 'element-plus'
+
+    const sidentifyMode = ref('') //输入框验证码
+    const identifyCode = ref('') //图形验证码
+    const identifyCodes = ref('1234567890abcdefjhijklinopqrsduvwxyz') //验证码出现的数字和字母
+
+
     const container = ref()
     const loginForm = ref()
     const registerForm = ref()
+    const randomNum = (min:any, max:any) => {
+        max = max + 1
+        return Math.floor(Math.random() * (max - min) + min)
+    }
+    const makeCode = (o:any, l:any) => {
+        for (let i = 0; i < l; i++) {
+            identifyCode.value += o[randomNum(0, o.length)]
+        }
+    }
+    const refreshCode = () => {
+        identifyCode.value = ''
+        makeCode(identifyCodes.value, 4)
+    }
 
     onMounted(() => {
+        identifyCode.value = ''
+        makeCode(identifyCodes.value, 4)
         const jwt = localStorage.getItem('jwt');
         if (jwt) {
             router.push('/space');
@@ -71,6 +101,11 @@
 
     const toSignIn = () => {
         container.value.classList.remove('right-panel-active');
+        register_form.value = {
+                        registerName: '',
+                        registerPassword: '',
+                        registerEmail: '',
+                    }
     }
     const toSignUp = () => {
         container.value.classList.add('right-panel-active');
@@ -114,40 +149,35 @@
 
     const handleRegister = () => {
         registerForm.value.validate(async(valid:any) => {
+            //验证验证码是否正确
+            if (sidentifyMode.value != identifyCode.value) {
+                ElMessage({ type: 'error', message: '验证码错误' })
+                refreshCode()
+                return
+            }
             if (valid) {
                 try {
-                    const response = await fetch('/api/user/register', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            username: register_form.value.registerName,
-                            password: register_form.value.registerPassword,
-                            email: register_form.value.registerEmail,
-                        })
+                    console.log(register_form.value)
+                    await axios.post('/api/user/users/', {
+                        username: register_form.value.registerName,
+                        password: register_form.value.registerPassword,
+                        email: register_form.value.registerEmail,
                     })
-                    if (response.ok) {
-                        alert('注册成功，请登录')
-                        router.push('/login');
-                    } else {
-                        alert('注册失败，用户名或邮箱被占用')
-                    }
+                    alert('注册成功，请登录')
+                    toSignIn()
                 }catch(e){
-                    console.error(e)
+                    alert('注册失败，用户名或邮箱已被占用')
                 }
             } else {
-                console.log(valid)
-                console.log('注册失败，请检查输入')
+                alert('注册失败，请检查输入')
             }
         })
     }
-
     const handleLogin = () => {
         loginForm.value.validate(async(valid:any) => {
             if (valid) {
                 try{
-                    const response = await axios.post('http://192.168.1.101:8080/user/token', {
+                    const response = await axios.post('/api/user/token', {
                         username: login_form.value.loginName,
                         password: login_form.value.loginPassword,
                     })
@@ -157,6 +187,7 @@
                     localStorage.setItem('access_token', accessToken);
                     localStorage.setItem('refresh_token', refreshToken);
                     localStorage.setItem('username', login_form.value.loginName);
+                    localStorage.setItem('password', login_form.value.loginPassword)
                     localStorage.setItem('user_id', user_id);
                     console.log('login!')
                     await router.push('/space');

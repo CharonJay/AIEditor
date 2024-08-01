@@ -26,11 +26,16 @@ SECRET_KEY = "django-insecure-h4cd$_esr+8il81*xcfg)b*4jbqij*+b!+#d8x9vcdr)ln#jdo
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*",]
 
+ALIPAY_APPID = '9021000139625959'   #沙箱9021000139625959   2021004158667786
+ALIPAY_PRIVATE_KEY = open("backend/密钥20240716010530/private_key.txt").read()
+ALIPAY_PUBLIC_KEY = open("backend/密钥20240716010530/public_key.txt").read()
+ALIPAY_DEBUG = True  # 设置为 False 则使用正式环境
+ALIPAY_NOTIFY_URL = 'http://6484ccf8.r3.cpolar.cn/member/alipay-notify/'  # 支付宝异步通知URL
+ALIPAY_RETURN_URL = 'http://6484ccf8.r3.cpolar.cn/member/alipay-return/'  # 支付宝同步通知URL
 
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -43,7 +48,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'chat',
-    'dialogue.apps.DialogueConfig'
+    'dialogue.apps.DialogueConfig',
+    "member.apps.MemberConfig"
 ]
 
 MIDDLEWARE = [
@@ -161,6 +167,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_ROOT_CHAT = os.path.join(BASE_DIR, 'chat')
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEDIA_URL = 'http://6484ccf8.r3.cpolar.cn/user/media/avatars/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/avatars')
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

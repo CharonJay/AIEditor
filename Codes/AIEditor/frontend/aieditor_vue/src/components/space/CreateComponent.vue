@@ -2,8 +2,14 @@
     <el-table :data="files" class ="table" :row-style="{ height: '5rem', 'font-size':'1.2rem'}" :cell-style="{ padding: '0px', 'font-size': '1.2rem' }">
         <el-table-column prop="name" label="文件名">
             <template #default="{ row }">
-                    <router-link class="router-link-document" :to="`/files/${row.id}`">
-                        <el-icon size="32"><Document /></el-icon>
+                    <router-link class="router-link-document" :to="`/files/${row.id}/${row.status}`">
+                        <template v-if="row.status === 0">
+                          <el-icon size="32"><Document /></el-icon>
+                        </template>
+                        <template v-else-if="row.status === 1">
+                          <el-icon size="32"><DocumentCopy /></el-icon>
+                        </template>
+
                         &nbsp;&nbsp;{{ row.name }}
                     </router-link>
             </template>
@@ -44,7 +50,6 @@
 import {ref, onMounted, reactive} from 'vue'
 import {useRouter, useRoute} from 'vue-router'
 import axios from 'axios';
-import EditorPanel from '@/components/editor/EditorPanel.vue';
 
 
 const files = ref([])
@@ -58,6 +63,7 @@ const fetchFiles = async () => {
   try {
     const response = await fetch('/api/user/filesMenu/create/' + localStorage.getItem('username') + '/')
     files.value = await response.json()
+    console.log(files.value)
   } catch (error) {
     console.error('Failed to fetch data:', error)
   }

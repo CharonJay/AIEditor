@@ -11,7 +11,7 @@
             </el-icon>
           </span>
           <template #dropdown>
-            <el-dropdown-menu>
+            <el-dropdown-menu >
               <el-dropdown-item @click="saveDocument">保存文档</el-dropdown-item>
               <el-dropdown-item @click="saveFormat">保存为模板</el-dropdown-item>
               <el-dropdown-item>
@@ -32,6 +32,9 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+          <el-button v-if="status == 1" link class="collaborate-button" type="primary" @click="shareDocument">
+            邀请他人一起协作
+          </el-button>
         <el-text class="file-state" :type="fileStateType">{{fileState}}</el-text>
         <el-text class="save-time">{{saveTime}}</el-text>
       </el-space>
@@ -40,6 +43,10 @@
   <el-container class="body">
     <div class="common-layout">
       <el-container v-loading.fullscreen.lock="loading" element-loading-text="AI正在努力中..." class="parent-container">
+        <el-dialog class = "share-document-dialog" v-model="shareDocumentDialogVisible" title = "分享文档" width = "500">
+          <p>将这段分享码分享给其他人吧！</p>
+          <p>{{ inviteCode }}</p>
+        </el-dialog>
         <el-dialog class="ai-enhancement-dialog" v-model="dialogVisible" :title="dialogTitle" width="500">
           <span class = "text-enhancement-text">{{aiEnhancedText}}</span>
           <template #footer>
@@ -78,8 +85,8 @@
                   <el-option v-for="item in effectOptions" :key="item" :label="item" :value="item" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="其他内容" :label-width="formLabelWidth">
-                <el-input v-model="form.otherContent" placeholder="请输入其他内容" />
+              <el-form-item label="文本内容" :label-width="formLabelWidth">
+                <el-input v-model="form.otherContent"  type="textarea" placeholder="请输入其他内容" :rows="10"/>
               </el-form-item>
             </el-form>
             <template #footer>
@@ -161,7 +168,7 @@
         </div>
         <el-header class="header-menu">
           <div class="editor-menu" v-if="editor">
-            <MenuBar :editor="editor" />
+            <MenuBar :editor="editor"  :title-text="titleText"/>
           </div>
         </el-header>
         <el-container>
@@ -192,7 +199,7 @@
                   <i class="ri-translate"></i>
                   翻译
                 </el-button>
-                <el-button @click="dialogFormVisible = true; bubbleMenuVisible=false"  text bg>
+                <el-button @click=" text2Img"  text bg>
                   <i class="ri-translate"></i>
                   文生图
                 </el-button>
@@ -220,9 +227,11 @@
 </template>
 
 <script>
-
+import Document from '@tiptap/extension-document'
+import Paragraph from '@tiptap/extension-paragraph'
+import Text from '@tiptap/extension-text'
 import {ArrowDown, ArrowLeft, ArrowRight, UploadFilled} from "@element-plus/icons-vue";
-import {useEditor, EditorContent, VueNodeViewRenderer} from '@tiptap/vue-3';
+import {useEditor, Editor, EditorContent, VueNodeViewRenderer} from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import TaskList from "@tiptap/extension-task-list";
@@ -281,6 +290,11 @@ import '@/assets/remixicon/remixicon.css'
 
 import router from "@/router/index.ts";
 
+import Collaboration from '@tiptap/extension-collaboration'
+import * as Y from 'yjs'
+import { TiptapCollabProvider } from '@hocuspocus/provider'
+import { onUnmounted } from "vue";
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
 
 
 
@@ -307,15 +321,28 @@ export default {
     msg: String
   },
   setup() {
+    const route = useRoute();
+    const id = route.params.id;
+    const status = route.params.status
+
     // 返回上一个页面
     const goBack = () =>{
       router.push("/space")
     }
+    // ------协作-----
+    const doc = new Y.Doc() // Initialize Y.Doc for shared editing
 
     const titleText = ref("未命名")
     const saveTime = ref("文档已保存")
     const fileState = ref("允许编辑")
     const fileStateType = ref("primary")
+    const mycolor = '#' + Math.floor(Math.random() * 16777215).toString(16)
+    const inviteCode = btoa(`document${id}`, 'e97e0vk0')
+    const shareDocumentDialogVisible = ref(false)
+
+    const shareDocument = () => {
+      shareDocumentDialogVisible.value = true;
+    }
 
     const initHtmlContent = ref("")
     const props = defineProps({
@@ -326,15 +353,65 @@ export default {
          },
        },
     })
-    const route = useRoute();
-    const id = route.params.id;
+
+    const provider = new TiptapCollabProvider({
+        name: `document${id}`,
+        appId: 'e97e0vk0',
+        token: localStorage.getItem('access_token'),
+        document: doc,
+        forceSyncInterval: 1000,
+        onOpen() {
+          console.log('WebSocket connection opened.')
+        },
+        onConnect() {
+          console.log('Connected to Collab server')
+        },
+        onAuthenticated() {
+          console.log('Authenticated')
+        },
+        onAuthenticationFailed({reason}){
+          console.log('Authentication failed')
+          console.error('Authentication failed:', reason)
+        },
+        onStatus(){
+          console.log('Status changed')
+        },
+        onSynced() {
+          if (!doc.getMap('config').get('initialContentLoaded') && editor) {
+            doc.getMap('config').set('initialContentLoaded', true)
+          }
+          console.log('Synced')
+        },
+      })
+
+
+
     onMounted(async()=>{
       const response = await axios.get(`/api/user/document/get/${id}/`)
       const data = response.data;
       initHtmlContent.value = data[0].content;
-      editor.value.commands.insertContent(initHtmlContent.value)
       titleText.value = data[0].name;
     })
+    // ------协作者设置-----
+    provider.on('synced', () => {
+      console.log('Document synced.')
+    })
+    provider.setAwarenessField('user', {
+      // Share any information you like
+      name: localStorage.getItem('username'),
+      color: mycolor,
+    })
+
+    document.addEventListener('mousemove', (event) => {
+      // Share any information you like
+      provider.setAwarenessField('user', {
+        name: localStorage.getItem('username'),
+        color: mycolor,
+        mouseX: event.clientX,
+        mouseY: event.clientY,
+      })
+    })
+
 
     //文档保存函数
     const saveDocument = async () => {
@@ -391,6 +468,7 @@ export default {
       // 使用正则表达式替换匹配的部分为空字符串，即删除匹配的部分
       const cleanedText = htmlContent.replace(regex, '');
       const userName = localStorage.getItem("username")
+      // 保存内容中的标题
       const $doc = editor.value.$doc;
       const firstH1 = $doc.querySelector("heading", { level: 1 });
       if (firstH1) {
@@ -583,6 +661,20 @@ export default {
     const editor = useEditor({
       content: initHtmlContent.value,
       extensions: [
+        Document,
+        Text,
+        // ---------协作设置----------
+        Collaboration.configure({
+          document: doc,
+        }),
+        CollaborationCursor.configure({
+          provider: provider,
+          user: {
+            name: localStorage.getItem('username'),
+            color: mycolor,
+          },
+        }),
+
         Highlight,
         TaskList,
         TaskItem.configure({
@@ -644,21 +736,7 @@ export default {
     const dialogTitle = ref('');  // 设置对话框标题
     const loading = ref(false);  // 设置加载状态
     const bubbleMenuVisible = ref(true);   // 设置bubble_menu是否可见
-
-    // ai总结
-    const summaryText = async () => {
-      bubbleMenuVisible.value = false; // 隐藏bubble_menu
-      dialogTitle.value = '';
-      aiEnhancedText.value = ''; // 清除面板内容
-      loading.value = true;
-      await editor.value.chain().focus().summaryText((text) => {
-        dialogTitle.value = '摘要结果'; // 修改对话框标题
-        aiEnhancedText.value = text.response;  // 修改对话框面板内容
-        loading.value = false;
-        bubbleMenuVisible.value = true;
-        dialogVisible.value = true; // 显示对话框
-      }).run();
-    };
+    const position = ref({});
 
     // ai润色
     const polishText = async () => {
@@ -666,8 +744,27 @@ export default {
       dialogTitle.value = '';
       aiEnhancedText.value = ''; // 清除面板内容
       loading.value = true;
+      const { from, to } = editor.value.state.selection;
+      position.value = { from, to };  // 构建位置对象
       await editor.value.chain().focus().polishText((text) => {
         dialogTitle.value = '润色结果'; // 修改对话框标题
+        aiEnhancedText.value = text.response;  // 修改对话框面板内容
+        loading.value = false;
+        bubbleMenuVisible.value = true;
+        dialogVisible.value = true; // 显示对话框
+      }).run();
+    };
+
+    // ai总结
+    const summaryText = async () => {
+      bubbleMenuVisible.value = false; // 隐藏bubble_menu
+      dialogTitle.value = '';
+      aiEnhancedText.value = ''; // 清除面板内容
+      loading.value = true;
+      const { from, to } = editor.value.state.selection;
+      position.value = { from, to };  // 构建位置对象
+      await editor.value.chain().focus().summaryText((text) => {
+        dialogTitle.value = '摘要结果'; // 修改对话框标题
         aiEnhancedText.value = text.response;  // 修改对话框面板内容
         loading.value = false;
         bubbleMenuVisible.value = true;
@@ -681,6 +778,8 @@ export default {
       dialogTitle.value = '';
       aiEnhancedText.value = ''; // 清除面板内容
       loading.value = true;
+      const { from, to } = editor.value.state.selection;
+      position.value = { from, to };  // 构建位置对象
       await editor.value.chain().focus().continuationText((text) => {
         dialogTitle.value = '续写结果'; // 修改对话框标题
         aiEnhancedText.value = text.response;  // 修改对话框面板内容
@@ -696,6 +795,8 @@ export default {
       dialogTitle.value = '';
       aiEnhancedText.value = ''; // 清除面板内容
       loading.value = true;
+      const { from, to } = editor.value.state.selection;
+      position.value = { from, to };  // 构建位置对象
       await editor.value.chain().focus().correctText((text) => {
         dialogTitle.value = '纠错结果'; // 修改对话框标题
         aiEnhancedText.value = text.response;  // 修改对话框面板内容
@@ -711,6 +812,8 @@ export default {
       dialogTitle.value = '';
       aiEnhancedText.value = ''; // 清除面板内容
       loading.value = true;
+      const { from, to } = editor.value.state.selection;
+      position.value = { from, to };  // 构建位置对象
       await editor.value.chain().focus().translateText((text) => {
         dialogTitle.value = '翻译结果'; // 修改对话框标题
         aiEnhancedText.value = text.response;  // 修改对话框面板内容
@@ -722,13 +825,12 @@ export default {
 
     // ai插入
     const insertText = () => {
-      const { from, to } = editor.value.state.selection;
-      const position = { from, to };  // 构建位置对象
-      editor.value.commands.insertContentAt(position, aiEnhancedText.value)
+      editor.value.commands.insertContentAt(position.value, aiEnhancedText.value)
       aiEnhancedText.value = ''; // 清除面板内容
       dialogTitle.value =''; // 清楚对话框标题内容
       dialogVisible.value = false; // 关闭对话框
     };
+
 
     const leftAsideVisable = ref(false)
 
@@ -766,6 +868,15 @@ export default {
     const dialogImageVisible = ref(false)
     const imageUrl = ref('')
     const formLabelWidth = '140px'
+
+    // 文生图
+    const text2Img = () => {
+      dialogFormVisible.value = true;
+      bubbleMenuVisible.value = false; // 隐藏bubble_menu
+      const { from, to } = editor.value.state.selection;
+      position.value = { from, to };  // 构建位置对象
+      form.otherContent = editor.value.state.doc.textBetween(from, to, ' ');  // 将选中的文本内容赋值给 otherContent
+    };
     const handleSubmit = async () => {
       if (!form.subject) {
         ElMessageBox.alert('请填写主体内容', '提示', {
@@ -782,7 +893,6 @@ export default {
       try {
         dialogImageVisible.value = true  // 显示正在绘制的对话框
         imageUrl.value = ''  // 清空之前的图片 URL
-
         const response = await axios.post('/api/chat/generate-image/', form)
         if (response.data.img_url) {
           imageUrl.value = response.data.img_url
@@ -800,8 +910,11 @@ export default {
       console.log('插入图片:', imageUrl.value)
       bubbleMenuVisible.value = true
       dialogImageVisible.value = false
+      dialogFormVisible.value = false
+      const imgText = `<img src="${imageUrl.value}"/>`;
+      editor.value.commands.insertContentAt(position.value, imgText)
     }
-    
+
     return {
       goBack,
       titleText,
@@ -838,6 +951,7 @@ export default {
       correctText,
       translateText,
       insertText,
+      text2Img,
       loading,
       bubbleMenuVisible,
       leftAsideVisable,
@@ -851,7 +965,14 @@ export default {
       formLabelWidth,
       insertImage,
       form,
-      imageUrl
+      imageUrl,
+      position,
+
+       // 协作
+      shareDocument,
+      inviteCode,
+      shareDocumentDialogVisible,
+      status
     }
   }
 }
@@ -861,10 +982,42 @@ export default {
 
 
 <style scoped lang="scss">
+/* Give a remote user a caret */
+:deep(.collaboration-cursor__caret) {
+    border-left: 1px solid #0d0d0d;
+    border-right: 1px solid #0d0d0d;
+    margin-left: -1px;
+    margin-right: -1px;
+    pointer-events: none;
+    position: relative;
+    word-break: normal;
+  }
+
+  /* Render the username above the caret */
+:deep(.collaboration-cursor__label) {
+    border-radius: 3px 3px 3px 0;
+    color: #0d0d0d;
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    left: -1px;
+    line-height: normal;
+    padding: 0.1rem 0.3rem;
+    position: absolute;
+    top: -1.4em;
+    user-select: none;
+    white-space: nowrap;
+  }
+.collaborate-button{
+  justify-items: center;
+  align-items: center;
+}
+
 .bubble-menu-button {
   width: 30vw;
 }
 .header-dropdown-menu-file {
+  align-items: center;
   cursor: pointer;
 }
 .knowledgeRepositoryDrawer:deep(.el-drawer__header) {
@@ -882,11 +1035,9 @@ export default {
 .save-time{
   color: lightgray;
 }
-.header-dropdown-menu-file{
-  height: 1.25rem;
-}
 .body{
   height: 95vh;
   width: 98vw;
 }
+
 </style>

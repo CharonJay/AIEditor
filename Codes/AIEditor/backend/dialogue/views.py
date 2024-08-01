@@ -54,7 +54,7 @@ os.environ["EB_AGENT_ACCESS_TOKEN"] = "667595ca971e8228418f477dd45e78444b88c14e"
 @method_decorator(csrf_exempt, name='dispatch')
 class ChatView(View):
     async def post(self, request, user_id):
-        try:
+        # try:
             body_unicode = request.body.decode('utf-8')  # 解码请求体
             data = json.loads(body_unicode)  # 解析JSON数据
             prompt = data.get('message')
@@ -64,6 +64,8 @@ class ChatView(View):
             # 去读缓存
             user_model = cache.get(f'user_model_{user_id}')
             user_messages = cache.get(f'user_messages_{user_id}')
+            print(user_model)
+            print(user_messages)
             # user_memory=cache.get(f'user_memory_{user_id}')
 
             user_messages.append(HumanMessage(prompt))
@@ -89,10 +91,10 @@ class ChatView(View):
 
 
             return JsonResponse({'response': response_message}, status=200)
-        except json.JSONDecodeError as e:
-            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+        # except json.JSONDecodeError as e:
+        #     return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+        # except Exception as e:
+        #     return JsonResponse({'error': str(e)}, status=500)
 
 
 # 获取知识库中所有内容
@@ -122,7 +124,7 @@ def get_kb(request, user_id):
 def add_new_pdf(request, user_id):
     # 获取上传的文件
     if request.method == 'POST':
-        # try:
+        try:
             # 读取文件,需要文件保存的路径和文件名
             uploaded_file = request.FILES.get('file')
             filename = uploaded_file.name
@@ -135,15 +137,13 @@ def add_new_pdf(request, user_id):
             for doc in documents:
                 text = doc.page_content
                 new_document.append(kb_Document(text, {"source": filename}))
-            print(text)
             kb.add_documents(f'user{user_id}', new_document)
-            print("2222")
             kb.save_kb(f'user{user_id}', f'user{user_id}')
 
             return JsonResponse({'success': '加入成功'}, status=200)
-        # except Exception as e:
-        #     # 捕获异常并返回错误信息
-        #     return JsonResponse({'error': str(e)}, status=500)
+        except Exception as e:
+            # 捕获异常并返回错误信息
+            return JsonResponse({'error': str(e)}, status=500)
     else:
         return JsonResponse({'error': 'No file provided'}, status=400)
 
@@ -247,8 +247,8 @@ def kb_chat(request, user_id):
     if request.method == "POST":
         try:
             data = json.loads(request.body)
-            prompt = data.get('prompt')
-
+            prompt = data.get('message')
+            print(prompt)
             if not prompt:
                 return JsonResponse({'error': '对话内容不能为空'}, status=400)
 

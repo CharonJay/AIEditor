@@ -11,11 +11,11 @@ export default defineConfig({
     }
   },
   server: {
-  host: '127.0.0.1',
+    host: '127.0.0.1',
     port: 8000,
     proxy: {
         '/api': {
-            target: 'http://192.168.1.101:8080',
+            target: 'http://6484ccf8.r3.cpolar.cn',
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api/, '')
         }

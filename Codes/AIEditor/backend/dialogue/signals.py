@@ -57,7 +57,7 @@ def create_user_ai_model(user):
 
     # 加入到缓存中
     print(user_messages)
-    DEFAULT_TIMEOUT = 7200  # 2 hours in seconds
+    DEFAULT_TIMEOUT = 86400  # 24 hours in seconds
     timeout = DEFAULT_TIMEOUT
 
     cache.set(f'user_model_{user_id}', user_model, timeout)

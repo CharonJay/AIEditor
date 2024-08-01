@@ -3,13 +3,18 @@ import Chat from '@/components/editor/Chat.vue'; // 聊天界面组件
 import Space from '@/views/Space.vue'; // 个人中心组件
 import LoginView from "@/views/LoginView.vue";
 import EditorPanel from '@/components/editor/EditorPanel.vue';
-
+import PersonalCenter from '@/views/PersonalCenter.vue';
 
 const routes = [
   {
     path: '/chat',
     name: 'Chat',
     component: Chat
+  },
+  {
+    path: "/personalcenter",
+    name: "PersonalCenter",
+    component: PersonalCenter,
   },
   {
     path: "/login",
@@ -31,7 +36,7 @@ const routes = [
     redirect: "/login",
   },
   {
-    path: '/files/:id',
+    path: '/files/:id/:status',
     name: 'File',
     component: EditorPanel,
     props: true,

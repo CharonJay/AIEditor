@@ -56,12 +56,10 @@ export default {
         id: Date.now(),
         person: 'admin',
         say: this.userInput.trim(),
-
       };
       this.messages.push(newMessage);
-
       if (this.useKnowledge){
-        axios.post(`/api/dialogue/dialogue/${localStorage.getItem('user_id')}/`, { message: this.userInput.trim() })
+        axios.post(`/api/dialogue/kbChat/${localStorage.getItem('user_id')}/`, { message: this.userInput.trim() })
         .then(response => {
           this.messages.push({
             id: Date.now(),

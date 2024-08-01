@@ -1,26 +1,31 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Files, DocumentTemplate, Documents
+from .models import CustomUser, Files, DocumentTemplate, Documents
 
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ('id', 'username', 'email', 'password')
-        extra_kwargs = {
-            'password': {'write_only': True}
-        }
+        model = CustomUser
+        fields = '__all__'
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = User.objects.create_user(
+        user = CustomUser.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            password=validated_data['password']
         )
+        user.set_password(validated_data['password'])
+        user.save()
         return user
 
+    def update(self, instance, validated_data):
+        # Remove password field from validated_data if present
+        if 'password' in validated_data:
+            del validated_data['password']
+
+        return super().update(instance, validated_data)
 
 class FileSerializer(serializers.ModelSerializer):
     class Meta:

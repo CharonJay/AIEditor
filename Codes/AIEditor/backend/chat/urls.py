@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import path
-from .views import ChatView
+from .views import ChatView, ImageGeneratorView
 
 from chat import views
 
@@ -15,5 +15,7 @@ urlpatterns = [
     path('ocr/', views.AI_ocr, name='ocr'),
     path('asr/', views.AI_asr, name='asr'),
     path('delatemultifile/', views.delete_multi_file, name='delatemultifile'),
-    path('format/',views.AI_Format, name='format')
+    path('format/',views.AI_Format, name='format'),
+    path('mindmap/', views.AI_mind_map, name='mindmap'),
+    path('generate-image/', ImageGeneratorView.as_view(), name='generate_image'),
 ]

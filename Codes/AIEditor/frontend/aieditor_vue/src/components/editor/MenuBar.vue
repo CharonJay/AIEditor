@@ -134,6 +134,10 @@ export default {
     editor: {
       type: Object,
       required: true
+    },
+    titleText:{
+      type:String,
+      required: true
     }
   },
   setup(props) {
@@ -583,16 +587,19 @@ export default {
           document.body.appendChild(tempDiv);
 
           // 使用 html2canvas 将 HTML 转换为 Canvas
-          const canvas = await html2canvas(tempDiv, { scale: 2 });
+          const canvas = await html2canvas(tempDiv, { scale: 2 , useCORS:true});
+          canvas.useCORS = true; //允许图片跨域
 
           // 创建 PDF 并将 Canvas 添加到 PDF 中
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+          // 将 Canvas 转换为图像并添加到 PDF 中
+          const pageData = canvas.toDataURL('image/png', 1.0);
+          pdf.addImage(pageData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight - 20); // 调整位置和尺寸
 
           // 下载 PDF
-          pdf.save('document.pdf');
+          pdf.save(`${props.titleText}.pdf`);
 
           // 移除临时 div
           document.body.removeChild(tempDiv);

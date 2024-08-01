@@ -6,7 +6,18 @@ from django.utils import timezone
 # Create your models here.
 class CustomUser(AbstractUser):
     # 在这里定义你的自定义字段，例如：
-    pass
+    information = models.TextField(default="这个人什么也没有留下~")
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
+    is_member = models.BooleanField(default=False)
+    membership_expiration = models.DateTimeField(blank=True, null=True)
+
+    def is_membership_active(self):
+        if self.is_member and self.membership_expiration:
+            return self.membership_expiration > timezone.now()
+        return False
+
+    def __str__(self):
+        return self.username
 
 
 class Files(models.Model):
